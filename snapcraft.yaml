@@ -1,0 +1,18 @@
+name: x86latency-test
+version: 0.0.1
+summary: Intel x86 kernel timer latency test
+description: x86latency test performs cyclic latency measurements on the high resolution nanosleep system call.
+
+confinement: strict
+
+parts:
+    x86latency-test:
+        plugin: make
+        source: .
+        build-packages:
+            - gcc
+            - make
+apps:
+    x86latency-test:
+        command: usr/bin/x86latency-test
+
