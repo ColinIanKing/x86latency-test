@@ -49,6 +49,18 @@
 #define WIDTH   32
 #endif
 
+typedef struct {
+	int user;
+	int nice;
+	int sys;
+	int idle;
+	int iowait;
+	int irq;
+	int softirq;
+	int ctxt;
+	int irqs;
+} stats_t;
+
 static pid_t *cpu_pids;
 
 static void cpu_consume_kill(void)
@@ -66,16 +78,20 @@ static void cpu_consume_kill(void)
 
 static void cpu_consume_sighandler(int dummy)
 {
+	(void) dummy;
+
 	exit(0);
 }
 
 static void cpu_sigint_handler(int dummy)
 {
+	(void) dummy;
+
 	cpu_consume_kill();
 	exit(0);
 }
 
-static void cpu_consume_cycles(void)
+static int cpu_consume_cycles(void)
 {
 	signal(SIGUSR1, cpu_consume_sighandler);
 
@@ -86,6 +102,7 @@ static void cpu_consume_cycles(void)
 		dummy += 0.0000037;
 		i++;
 	}
+	return i;
 }
 
 void cpu_consume_complete(void)
@@ -103,13 +120,13 @@ int cpu_consume_start(void)
 
 	signal(SIGINT, cpu_sigint_handler);
 
-	for (i=0;i<MAX_TASKS;i++) {
+	for (i = 0; i < MAX_TASKS; i++) {
 		pid_t pid;
 
 		pid = fork();
 		switch (pid) {
 		case 0: /* Child */
-			cpu_consume_cycles();	
+			(void)cpu_consume_cycles();	
 			break;
 		case -1:
 			/* Went wrong */
@@ -140,7 +157,11 @@ static inline uint64_t rdtsc(void)
 #endif
 }
 
-void calc_mean_and_stddev(double *values, int len, double *mean, double *stddev)
+static void calc_mean_and_stddev(
+	double *values,
+	const int len,
+	double *mean,
+	double *stddev)
 {
 	int i;
 	double total = 0.0;
@@ -159,69 +180,52 @@ void calc_mean_and_stddev(double *values, int len, double *mean, double *stddev)
 	*stddev = sqrt(total / (double)len);
 }
 
-uint64_t tsc_ticks_per_second(void)
-{
-
-	uint64_t t1,t2;
-	double values[TICKS_SAMPLES];
-	double tsc_mean, tsc_stddev;
-	int i;
-
-	printf("Calculating TSC ticks per second..\n");
-
-	for (i = 0; i < TICKS_SAMPLES; i++) {
-		t1 = rdtsc();
-		sleep(1);
-		t2 = rdtsc();
-		values[i] = (double)t2-t1;
-	}
-	calc_mean_and_stddev(values, TICKS_SAMPLES, &tsc_mean, &tsc_stddev);
-
-	printf("Got %" PRIu64 " TSC ticks per second.\n", (uint64_t)tsc_mean);
-	
-	return (uint64_t)tsc_mean;
-}
-
-typedef struct {
-	int user;
-	int nice;
-	int sys;
-	int idle;
-	int iowait;
-	int irq;
-	int softirq;
-	int ctxt;
-	int irqs;
-} stats;
-
-int read_sys_stats(stats *info)
+static int read_sys_stats(stats_t *info)
 {
 	FILE *fp;
 	char buffer[4096];
-	stats stat;
+	stats_t stat;
 
 	fp = fopen("/proc/stat", "r");
 	if (fp == NULL)	
 		return 0;
 
+	memset(&stat, 0, sizeof(stat));
+
 	while (fgets(buffer, sizeof(buffer), fp) != NULL) {
 		if (strncmp(buffer, "cpu ", 4) == 0) {
 			char cpu[10];
-			sscanf(buffer, "%s %d %d %d %d %d %d %d",
-				cpu, &stat.user, &stat.nice, &stat.sys, &stat.idle, &stat.iowait, &stat.irq, &stat.softirq);
+
+			if (sscanf(buffer, "%s %d %d %d %d %d %d %d",
+				   cpu, &stat.user, &stat.nice,
+				   &stat.sys, &stat.idle, &stat.iowait,
+				   &stat.irq, &stat.softirq) != 8) {
+				stat.user = 0;
+				stat.nice = 0;
+				stat.sys = 0;
+				stat.idle = 0;
+				stat.iowait = 0;
+				stat.irq = 0;
+				stat.softirq = 0;
+			}
+				
 		}	
 		if (strncmp(buffer, "ctx", 3) == 0) {
 			char ctxt[10];
-			sscanf(buffer, "%s %d",
-				ctxt, &stat.ctxt);
+
+			if (sscanf(buffer, "%s %d",
+				   ctxt, &stat.ctxt) != 2) {
+				stat.ctxt = 0;
+			}
 		}
 		if (strncmp(buffer, "intr", 4) == 0) {
-			int irq;
-			char *ptr = buffer+4;
+			char *ptr = buffer + 4;
 
 			stat.irqs = 0;
 
 			while (*ptr == ' ') {
+				int irq;
+
 				while (*ptr == ' ')
 					ptr++;
 				irq = atoi(ptr);
@@ -231,17 +235,17 @@ int read_sys_stats(stats *info)
 			}
 		}
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
 	*info = stat;
 
 	return 1;
 }
 
-void test_cpu_loads(void)
+static void test_cpu_loads(void)
 {
 	int i;
-	stats s1,s2;
+	stats_t s1, s2;
 
 	double values[9][CPU_LOAD_SAMPLES];
 
@@ -309,10 +313,9 @@ void test_cpu_loads(void)
 	}
 }
 
-void test_cpu_usage(void)
+static void test_cpu_usage(void)
 {
 	int i;
-	uint64_t t1,t2;
 	double values[CPU_SAMPLES];
 	double mean, stddev;
 
@@ -320,6 +323,7 @@ void test_cpu_usage(void)
 
 	for (i = 0; i < CPU_SAMPLES; i++) {
 		register uint64_t count = 0;
+		uint64_t t1, t2;
 
 		t1 = rdtsc();
 		t2 = t1 + 1000000000ULL;
@@ -336,7 +340,7 @@ void test_cpu_usage(void)
 }
 
 
-void test_clock_jitter(void)
+static void test_clock_jitter(void)
 {
 	int64_t us;
 
@@ -351,12 +355,12 @@ void test_clock_jitter(void)
 		double tsc_mean, tv_mean;
 		double tsc_stddev, tv_stddev;
 		double accuracy;
-		uint64_t t1,t2;
 
 		for (j = 0; j < TSC_SAMPLES; j++) {
 			req.tv_sec = us / 1000000;
 			req.tv_nsec = (us * 1000) % 1000000000;
-			struct timeval tv1,tv2;
+			struct timeval tv1, tv2;
+			uint64_t t1, t2;
 			
 			gettimeofday(&tv1, NULL);
 			t1 = rdtsc();
