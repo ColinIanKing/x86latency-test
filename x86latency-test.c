@@ -40,6 +40,16 @@
 #define CPU_SAMPLES		(60)
 #define TSC_SAMPLES		(25)
 
+#if !(defined(__x86_64__) || defined(__x86_64) || defined(__i386__) || defined(__i386))
+#error only for Intel processors!
+#endif
+
+#if defined(__x86_64__) || defined(__x86_64)
+#define WIDTH   64
+#else
+#define WIDTH   32
+#endif
+
 static pid_t *cpu_pids;
 
 static void cpu_consume_kill(void)
@@ -116,16 +126,17 @@ int cpu_consume_start(void)
 
 static inline uint64_t rdtsc(void)
 {
-	if (sizeof(long) == sizeof(uint64_t)) {
-		uint32_t lo, hi;
-        	asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
-		return ((uint64_t)(hi) << 32) | lo;
-	}
-	else {
-		uint64_t tsc;
-        	asm volatile("rdtsc" : "=A" (tsc));
-		return tsc;
-	}
+#if WIDTH == 32
+	uint32_t lo, hi;
+        asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
+	return ((uint64_t)(hi) << 32) | lo;
+#elif WIDTH == 64
+	uint64_t tsc;
+        asm volatile("rdtsc" : "=A" (tsc));
+	return tsc;
+#elif
+	#error unknown CPU integer width
+#endif
 }
 
 void calc_mean_and_stddev(double *values, int len, double *mean, double *stddev)
