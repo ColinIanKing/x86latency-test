@@ -384,7 +384,7 @@ static void test_clock_jitter(void)
 	}
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
 	cpu_consume_start();
 	test_cpu_loads();
