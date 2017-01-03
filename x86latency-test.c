@@ -105,13 +105,13 @@ static int cpu_consume_cycles(void)
 	return i;
 }
 
-void cpu_consume_complete(void)
+static void cpu_consume_complete(void)
 {
 	cpu_consume_kill();
 	free(cpu_pids);	
 }
 
-int cpu_consume_start(void)
+static int cpu_consume_start(void)
 {
 	int i;
 
