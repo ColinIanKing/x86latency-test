@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <math.h>
@@ -126,10 +127,12 @@ static inline uint64_t rdtsc(void)
 {
 #if WIDTH == 32
 	uint32_t lo, hi;
+
         asm volatile("rdtsc" : "=a" (lo), "=d" (hi));
 	return ((uint64_t)(hi) << 32) | lo;
 #elif WIDTH == 64
 	uint64_t tsc;
+
         asm volatile("rdtsc" : "=A" (tsc));
 	return tsc;
 #else
@@ -174,7 +177,7 @@ uint64_t tsc_ticks_per_second(void)
 	}
 	calc_mean_and_stddev(values, TICKS_SAMPLES, &tsc_mean, &tsc_stddev);
 
-	printf("Got %lld TSC ticks per second.\n", (unsigned long long)tsc_mean);
+	printf("Got %" PRIu64 " TSC ticks per second.\n", (uint64_t)tsc_mean);
 	
 	return (uint64_t)tsc_mean;
 }
@@ -335,7 +338,7 @@ void test_cpu_usage(void)
 
 void test_clock_jitter(void)
 {
-	long long int us;
+	int64_t us;
 
 	printf("Delay (us)           Mean            StdDev                Mean           StdDev         Deviation\n");
 	printf("                   TSC ticks       TSC ticks           Clock Time (us)  Clock Time (us)  from Clock\n");
@@ -372,7 +375,7 @@ void test_clock_jitter(void)
 	
 		accuracy = fabs((double)(us) - tv_mean) / ((double)(us)) * 100.0;
 
-		printf("%10lld\t%14.3f\t%14.3f\t\t%12.3f\t%12.3f\t%8.3f%%\n",
+		printf("%10" PRId64 "\t%14.3f\t%14.3f\t\t%12.3f\t%12.3f\t%8.3f%%\n",
 			us, tsc_mean, tsc_stddev, tv_mean, tv_stddev, accuracy);
 	}
 }
