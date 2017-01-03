@@ -132,7 +132,7 @@ static inline uint64_t rdtsc(void)
 	uint64_t tsc;
         asm volatile("rdtsc" : "=A" (tsc));
 	return tsc;
-#elif
+#else
 	#error unknown CPU integer width
 #endif
 }
