@@ -196,7 +196,7 @@ static int read_sys_stats(stats_t *info)
 		if (strncmp(buffer, "cpu ", 4) == 0) {
 			char cpu[10];
 
-			if (sscanf(buffer, "%s %d %d %d %d %d %d %d",
+			if (sscanf(buffer, "%9s %d %d %d %d %d %d %d",
 				   cpu, &stat.user, &stat.nice,
 				   &stat.sys, &stat.idle, &stat.iowait,
 				   &stat.irq, &stat.softirq) != 8) {
@@ -213,7 +213,7 @@ static int read_sys_stats(stats_t *info)
 		if (strncmp(buffer, "ctx", 3) == 0) {
 			char ctxt[10];
 
-			if (sscanf(buffer, "%s %d",
+			if (sscanf(buffer, "%9s %d",
 				   ctxt, &stat.ctxt) != 2) {
 				stat.ctxt = 0;
 			}
@@ -309,7 +309,7 @@ static void test_cpu_loads(void)
 	for (i = 0; i < 9; i++) {
 		double mean, stddev;
 		calc_mean_and_stddev(values[i], CPU_LOAD_SAMPLES, &mean, &stddev);
-		printf("%20.20s: Mean: %8.2f%s (StdDev %f)\n", tags[i], mean, i < 7 ? "%" : " ", stddev);
+		printf("%20.20s: Mean: %8.2f%s (StdDev %.4f)\n", tags[i], mean, i < 7 ? "%" : " ", stddev);
 	}
 }
 
