@@ -23,9 +23,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <math.h>
-#include <limits.h>
 
-#include <dirent.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <time.h>
