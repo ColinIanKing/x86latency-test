@@ -23,7 +23,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <math.h>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -177,7 +176,7 @@ static void calc_mean_and_stddev(
 		d *= d;
 		total += d;
 	}
-	*stddev = sqrt(total / (double)len);
+	*stddev = __builtin_sqrt(total / (double)len);
 }
 
 static int read_sys_stats(stats_t *info)
@@ -377,7 +376,7 @@ static void test_clock_jitter(void)
 		calc_mean_and_stddev(tsc_timings, TSC_SAMPLES, &tsc_mean, &tsc_stddev);
 		calc_mean_and_stddev(tv_timings, TSC_SAMPLES, &tv_mean, &tv_stddev);
 	
-		accuracy = fabs((double)(us) - tv_mean) / ((double)(us)) * 100.0;
+		accuracy = __builtin_fabs((double)(us) - tv_mean) / ((double)(us)) * 100.0;
 
 		printf("%10" PRId64 "\t%14.3f\t%14.3f\t\t%12.3f\t%12.3f\t%8.3f%%\n",
 			us, tsc_mean, tsc_stddev, tv_mean, tv_stddev, accuracy);
