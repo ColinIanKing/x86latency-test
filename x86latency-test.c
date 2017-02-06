@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <math.h>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -61,6 +62,22 @@ typedef struct {
 } stats_t;
 
 static pid_t *cpu_pids;
+
+static inline double newton_sqrt(const double n)
+{
+	const double precision = 1.0e-12;
+	double lo = (n < 1.0) ? n : 1.0;
+	double hi = (n < 1.0) ? 1.0 : n;
+
+	while ((hi - lo) > precision) {
+		double g = (lo + hi) / 2.0;
+		if ((g * g) > n)
+			hi = g;
+		else
+			lo = g;
+	}
+	return ((lo + hi) / 2.0);
+}
 
 static void cpu_consume_kill(void)
 {
@@ -176,7 +193,7 @@ static void calc_mean_and_stddev(
 		d *= d;
 		total += d;
 	}
-	*stddev = __builtin_sqrt(total / (double)len);
+	*stddev = newton_sqrt(total / (double)len);
 }
 
 static int read_sys_stats(stats_t *info)

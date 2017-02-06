@@ -19,9 +19,19 @@
 BINDIR=/usr/bin
 
 x86latency-test: x86latency-test.o
-	$(CC) $< -lm -o $@
+	$(CC) $< -o $@
 
-CFLAGS  += -O3 -Wall -Werror
+CFLAGS  += -O3 -Wall -Werror -Wextra
+
+#
+# Pedantic flags
+#
+ifeq ($(PEDANTIC),1)
+CFLAGS += -Wabi -Wcast-qual -Wfloat-equal -Wmissing-declarations \
+        -Wmissing-format-attribute -Wno-long-long -Wpacked \
+        -Wredundant-decls -Wshadow -Wno-missing-field-initializers \
+        -Wno-missing-braces -Wno-sign-compare -Wno-multichar
+endif
 
 clean:
 	rm -f x86latency-test x86latency-test.o x86latency-test*snap
