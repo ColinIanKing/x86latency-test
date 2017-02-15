@@ -124,7 +124,7 @@ static int cpu_consume_cycles(void)
 static void cpu_consume_complete(void)
 {
 	cpu_consume_kill();
-	free(cpu_pids);	
+	free(cpu_pids);
 }
 
 static int cpu_consume_start(void)
@@ -142,7 +142,7 @@ static int cpu_consume_start(void)
 		pid = fork();
 		switch (pid) {
 		case 0: /* Child */
-			(void)cpu_consume_cycles();	
+			(void)cpu_consume_cycles();
 			break;
 		case -1:
 			/* Went wrong */
@@ -203,7 +203,7 @@ static int read_sys_stats(stats_t *info)
 	stats_t stat;
 
 	fp = fopen("/proc/stat", "r");
-	if (fp == NULL)	
+	if (fp == NULL)
 		return 0;
 
 	memset(&stat, 0, sizeof(stat));
@@ -224,8 +224,7 @@ static int read_sys_stats(stats_t *info)
 				stat.irq = 0;
 				stat.softirq = 0;
 			}
-				
-		}	
+		}
 		if (strncmp(buffer, "ctx", 3) == 0) {
 			char ctxt[10];
 
@@ -294,8 +293,8 @@ static void test_cpu_loads(void)
 			s2.idle - s1.idle,
 			s2.iowait - s1.iowait,
 			s2.irq  - s1.irq,
-			s2.softirq - s1.softirq,	
-			s2.ctxt - s1.ctxt,		
+			s2.softirq - s1.softirq,
+			s2.ctxt - s1.ctxt,
 			s2.irqs - s1.irqs);
 		*/
 
@@ -307,7 +306,7 @@ static void test_cpu_loads(void)
 			 	(s2.irq  - s1.irq) +
 			 	(s2.softirq - s1.softirq));
 		total = total / 100.0;
-	
+
 		values[0][i] = (double)(s2.user - s1.user) / total;
 		values[1][i] = (double)(s2.nice - s1.nice) / total;
 		values[2][i] = (double)(s2.sys - s1.sys) / total;
@@ -366,7 +365,7 @@ static void test_clock_jitter(void)
 	for (us=100; us <= 10000000; us *= 10) {
 		int j;
 		struct timespec req;
-		double tsc_timings[TSC_SAMPLES];	
+		double tsc_timings[TSC_SAMPLES];
 		double tv_timings[TSC_SAMPLES];
 		double tsc_mean, tv_mean;
 		double tsc_stddev, tv_stddev;
@@ -377,7 +376,7 @@ static void test_clock_jitter(void)
 			req.tv_nsec = (us * 1000) % 1000000000;
 			struct timeval tv1, tv2;
 			uint64_t t1, t2;
-			
+
 			gettimeofday(&tv1, NULL);
 			t1 = rdtsc();
 			nanosleep(&req, NULL);
@@ -392,7 +391,7 @@ static void test_clock_jitter(void)
 
 		calc_mean_and_stddev(tsc_timings, TSC_SAMPLES, &tsc_mean, &tsc_stddev);
 		calc_mean_and_stddev(tv_timings, TSC_SAMPLES, &tv_mean, &tv_stddev);
-	
+
 		accuracy = __builtin_fabs((double)(us) - tv_mean) / ((double)(us)) * 100.0;
 
 		printf("%10" PRId64 "\t%14.3f\t%14.3f\t\t%12.3f\t%12.3f\t%8.3f%%\n",
