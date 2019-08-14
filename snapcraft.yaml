@@ -1,11 +1,17 @@
 name: x86latency-test
-version: 0.0.2
+version: git
+version-script: |
+    echo $(git describe --tags)
 summary: Intel x86 kernel timer latency test
 description: x86latency test performs cyclic latency measurements on the high resolution nanosleep system call.
 type: app
 grade: stable
 
 confinement: strict
+
+architectures:
+    - amd64
+    - i386
 
 parts:
     x86latency-test:
